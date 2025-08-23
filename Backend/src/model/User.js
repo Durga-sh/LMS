@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 6,
-      select: false, 
+      select: false,
     },
     role: {
       type: String,
@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema(
     refreshToken: {
       type: String,
       default: null,
-      select: false,
+      // Remove select: false - we need to be able to update this field
     },
     isActive: {
       type: Boolean,
@@ -58,13 +58,15 @@ userSchema.pre("save", async function (next) {
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
-  delete user.refreshToken;
+  delete user.refreshToken; // Still exclude from JSON responses
   return user;
 };
 
-userSchema.index({ email: 1 });
+// Remove this line to fix the duplicate index warning
+// userSchema.index({ email: 1 });
 
 module.exports = mongoose.model("User", userSchema);

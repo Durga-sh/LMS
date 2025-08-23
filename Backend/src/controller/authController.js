@@ -39,6 +39,69 @@ class AuthController {
     res.clearCookie("refreshToken");
   }
 
+  // Add the missing validation methods
+  validateRegistration({ name, email, password }) {
+    const errors = [];
+
+    // Name validation
+    if (!name || name.trim().length === 0) {
+      errors.push("Name is required");
+    } else if (name.trim().length < 2) {
+      errors.push("Name must be at least 2 characters long");
+    }
+
+    // Email validation
+    if (!email || email.trim().length === 0) {
+      errors.push("Email is required");
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errors.push("Please provide a valid email address");
+      }
+    }
+
+    // Password validation
+    if (!password) {
+      errors.push("Password is required");
+    } else {
+      if (password.length < 6) {
+        errors.push("Password must be at least 6 characters long");
+      }
+      if (!/(?=.*[a-z])/.test(password)) {
+        errors.push("Password must contain at least one lowercase letter");
+      }
+      if (!/(?=.*[A-Z])/.test(password)) {
+        errors.push("Password must contain at least one uppercase letter");
+      }
+      if (!/(?=.*\d)/.test(password)) {
+        errors.push("Password must contain at least one number");
+      }
+    }
+
+    return errors;
+  }
+
+  validateLogin({ email, password }) {
+    const errors = [];
+
+    // Email validation
+    if (!email || email.trim().length === 0) {
+      errors.push("Email is required");
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errors.push("Please provide a valid email address");
+      }
+    }
+
+    // Password validation
+    if (!password || password.trim().length === 0) {
+      errors.push("Password is required");
+    }
+
+    return errors;
+  }
+
   register = async (req, res) => {
     try {
       const { name, email, password } = req.body;
@@ -147,6 +210,7 @@ class AuthController {
       });
     }
   };
+
   logout = async (req, res) => {
     try {
       if (req.user) {
@@ -258,11 +322,7 @@ class AuthController {
           name: user.name,
           email: user.email,
           role: user.role,
-        },
-        tokens: {
-          accessToken: newAccessToken,
-          refreshToken: newRefreshToken,
-        },
+        }
       });
     } catch (error) {
       console.error("Refresh token error:", error);
