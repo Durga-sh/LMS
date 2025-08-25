@@ -36,7 +36,7 @@ const LoginPage = () => {
       const result = await authAPI.getCurrentUser();
       if (result.success) {
         // User is already logged in, redirect to dashboard
-        navigate("/dashboard", { replace: true });
+        navigate("/leads", { replace: true });
       }
     } catch (error) {
       // User not authenticated, stay on login page

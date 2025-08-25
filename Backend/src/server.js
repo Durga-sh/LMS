@@ -5,7 +5,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
-
+const leadRoutes = require("./routes/leads");
 const app = express();
 
 app.use(express.json());
@@ -19,6 +19,16 @@ app.use(
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/leads", leadRoutes);
+
+// Health check endpoint
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
+  });
+});
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

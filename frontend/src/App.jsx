@@ -1,4 +1,4 @@
-// App.jsx - Main Application Router with Protected Routes
+// frontend/src/App.jsx - Updated to include Lead Management
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import Dashboard from "./pages/DashboardPage";
+import LeadManagementPage from "./pages/LeadManagementPage";
 import authAPI from "./api/auth";
 import { Loader2 } from "lucide-react";
 
@@ -91,19 +91,17 @@ const App = () => {
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-
-          {/* Protected Routes */}
           <Route
-            path="/dashboard"
+            path="/leads"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <LeadManagementPage />
               </ProtectedRoute>
             }
           />
 
-          {/* Default redirect to dashboard for authenticated users, login for others */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          {/* Default redirect to leads for authenticated users, login for others */}
+          <Route path="/" element={<Navigate to="/leads" replace />} />
 
           {/* 404 Route - catch all unmatched routes */}
           <Route path="*" element={<NotFoundPage />} />
