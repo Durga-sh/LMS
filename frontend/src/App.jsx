@@ -73,8 +73,6 @@ const ProtectedRoute = ({ children }) => {
       />
     );
   }
-
-  console.log("ProtectedRoute: User authenticated, rendering children");
   return children;
 };
 
@@ -113,7 +111,9 @@ const App = () => {
           <Route
             path="/leads"
             element={
+              <ProtectedRoute>
                 <LeadManagementPage />
+              </ProtectedRoute>
             }
           />
 

@@ -5,6 +5,9 @@ import { ModuleRegistry } from "ag-grid-community";
 import { ClientSideRowModelModule, CsvExportModule } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([ClientSideRowModelModule, CsvExportModule]);
 import {
   Plus,
   Search,
@@ -602,9 +605,11 @@ const LeadManagementPage = () => {
       filter: false,
       suppressMenu: true,
       cellRenderer: (params) => {
+        const leadId = params.data?.id || params.node.id || Math.random();
         return (
           <div className="flex gap-1 h-full items-center justify-center">
             <button
+              key={`view-${leadId}`}
               className="action-btn view-btn p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
               title="View Details"
               onClick={() => handleViewLead(params.data)}
@@ -612,6 +617,7 @@ const LeadManagementPage = () => {
               <Eye className="w-4 h-4" />
             </button>
             <button
+              key={`edit-${leadId}`}
               className="action-btn edit-btn p-1.5 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
               title="Edit Lead"
               onClick={() => handleEditLead(params.data)}
@@ -619,6 +625,7 @@ const LeadManagementPage = () => {
               <Edit className="w-4 h-4" />
             </button>
             <button
+              key={`delete-${leadId}`}
               className="action-btn delete-btn p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
               title="Delete Lead"
               onClick={() => handleDeleteLead(params.data)}
@@ -779,7 +786,7 @@ const LeadManagementPage = () => {
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (gridRef.current?.api) {
-        gridRef.current.api.setQuickFilter(quickFilter);
+        gridRef.current.api.setGridOption("quickFilterText", quickFilter);
       }
     }, 300);
 
@@ -1104,7 +1111,6 @@ const LeadManagementPage = () => {
               className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 shadow-sm"
             />
           </div>
-
         </div>
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -1220,6 +1226,9 @@ const LeadManagementPage = () => {
               headerHeight={50}
               suppressLoadingOverlay={false}
               suppressNoRowsOverlay={false}
+              getRowId={(params) =>
+                params.data.id || params.data._id || params.node.id
+              }
               noRowsOverlayComponent={() =>
                 "No leads found. Try adjusting your filters or add some leads."
               }

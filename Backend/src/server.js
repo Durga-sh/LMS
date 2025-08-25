@@ -5,6 +5,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const authRoutes = require("./routes/auth");
+const leadRoutes = require("./routes/leads");
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(
 
 
 app.use("/api/auth", authRoutes);
+app.use("/api/leads", leadRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

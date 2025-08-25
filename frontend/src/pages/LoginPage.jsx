@@ -60,24 +60,19 @@ const LoginPage = () => {
     setMessage("");
 
     try {
-      console.log("Attempting login with:", { email: formData.email });
+  
       const result = await authAPI.login(formData);
-      console.log("Login result:", result);
-
       if (result.success) {
         setMessage(result.message);
-        const from = location.state?.from?.pathname || "/leads";
-        console.log("Login successful, navigating to:", from);
-
-        // Wait for a short delay to ensure session is set
+        const redirectPath = location.state?.from?.pathname || "/leads";
         setTimeout(() => {
           try {
-            navigate(from, { replace: true });
+            navigate(redirectPath, { replace: true });
           } catch (navError) {
             console.error("Navigation error, using window.location:", navError);
-            window.location.href = from;
+            window.location.href = redirectPath;
           }
-        }, 100); // Small delay to allow session/cookie to propagate
+        }, 100); 
       } else {
         console.error("Login failed:", result);
         if (result.errors) {
