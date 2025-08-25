@@ -1,4 +1,3 @@
-// frontend/src/App.jsx - Updated to include Lead Management
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -18,21 +17,33 @@ const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    checkAuthStatus();
-  }, []);
+    let isMounted = true;
 
-  const checkAuthStatus = async () => {
-    try {
-      const result = await authAPI.getCurrentUser();
-      console.log("ProtectedRoute auth check result:", result);
-      setIsAuthenticated(result.success);
-    } catch (error) {
-      console.error("User not authenticated in ProtectedRoute:", error);
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const checkAuthStatus = async () => {
+      try {
+        const result = await authAPI.getCurrentUser();
+        console.log("ProtectedRoute auth check result:", result);
+        if (isMounted) {
+          setIsAuthenticated(result.success);
+        }
+      } catch (error) {
+        console.error("User not authenticated in ProtectedRoute:", error);
+        if (isMounted) {
+          setIsAuthenticated(false);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    checkAuthStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -52,9 +63,15 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (isAuthenticated === false) {
     console.log("ProtectedRoute: User not authenticated, redirecting to login");
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: window.location.pathname }}
+        replace
+      />
+    );
   }
 
   console.log("ProtectedRoute: User authenticated, rendering children");
@@ -85,7 +102,6 @@ const NotFoundPage = () => {
   );
 };
 
-// Main App Component with Routes
 const App = () => {
   return (
     <Router>

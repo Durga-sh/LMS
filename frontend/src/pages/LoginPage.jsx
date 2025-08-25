@@ -29,16 +29,19 @@ const LoginPage = () => {
     const checkAuthStatus = async () => {
       try {
         const result = await authAPI.getCurrentUser();
+        console.log("LoginPage checkAuthStatus result:", result);
         if (result.success) {
-          navigate("/leads", { replace: true });
+          const from = location.state?.from?.pathname || "/leads";
+          console.log("User already authenticated, redirecting to:", from);
+          navigate(from, { replace: true });
         }
       } catch (error) {
-        console.log("User not authenticated" + error);
+        console.log("User not authenticated on mount:", error.message);
       }
     };
 
     checkAuthStatus();
-  }, [navigate]);
+  }, [navigate, location]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -64,14 +67,17 @@ const LoginPage = () => {
       if (result.success) {
         setMessage(result.message);
         const from = location.state?.from?.pathname || "/leads";
-        console.log("Attempting to navigate to:", from);
+        console.log("Login successful, navigating to:", from);
 
-        try {
-          navigate(from, { replace: true });
-        } catch (navError) {
-          console.error("Navigation error, using window.location:", navError);
-          window.location.href = from;
-        }
+        // Wait for a short delay to ensure session is set
+        setTimeout(() => {
+          try {
+            navigate(from, { replace: true });
+          } catch (navError) {
+            console.error("Navigation error, using window.location:", navError);
+            window.location.href = from;
+          }
+        }, 100); // Small delay to allow session/cookie to propagate
       } else {
         console.error("Login failed:", result);
         if (result.errors) {
