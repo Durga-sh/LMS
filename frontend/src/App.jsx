@@ -113,9 +113,7 @@ const App = () => {
           <Route
             path="/leads"
             element={
-              <ProtectedRoute>
                 <LeadManagementPage />
-              </ProtectedRoute>
             }
           />
 
