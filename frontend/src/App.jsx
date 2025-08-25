@@ -10,6 +10,7 @@ import RegisterPage from "./pages/RegisterPage";
 import LeadManagementPage from "./pages/LeadManagementPage";
 import authAPI from "./api/auth";
 import { Loader2 } from "lucide-react";
+import { debugEnvironment } from "./utils/debug";
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -21,13 +22,20 @@ const ProtectedRoute = ({ children }) => {
 
     const checkAuthStatus = async () => {
       try {
+        console.log("ProtectedRoute: Checking authentication status...");
         const result = await authAPI.getCurrentUser();
         console.log("ProtectedRoute auth check result:", result);
+
         if (isMounted) {
           setIsAuthenticated(result.success);
+          if (!result.success) {
+            console.log(
+              "ProtectedRoute: Authentication failed, will redirect to login"
+            );
+          }
         }
       } catch (error) {
-        console.error("User not authenticated in ProtectedRoute:", error);
+        console.error("ProtectedRoute authentication error:", error);
         if (isMounted) {
           setIsAuthenticated(false);
         }
@@ -101,6 +109,11 @@ const NotFoundPage = () => {
 };
 
 const App = () => {
+  // Debug environment in production to help diagnose issues
+  if (import.meta.env.MODE === "production") {
+    debugEnvironment();
+  }
+
   return (
     <Router>
       <div className="App">

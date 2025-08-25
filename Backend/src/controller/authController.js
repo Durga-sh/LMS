@@ -19,17 +19,21 @@ class AuthController {
   }
 
   setTokenCookies(res, accessToken, refreshToken) {
-    res.cookie("accessToken", accessToken, {
+    const isProduction = process.env.NODE_ENV === "production";
+    const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax", // "none" for cross-origin in production
+      domain: isProduction ? undefined : undefined, // Let browser handle domain
+    };
+
+    res.cookie("accessToken", accessToken, {
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
   }
@@ -322,7 +326,7 @@ class AuthController {
           name: user.name,
           email: user.email,
           role: user.role,
-        }
+        },
       });
     } catch (error) {
       console.error("Refresh token error:", error);

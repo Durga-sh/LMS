@@ -5,6 +5,15 @@ const authenticateToken = async (req, res, next) => {
   try {
     const accessToken = req.cookies.accessToken;
 
+    // Debug logging for production issues
+    console.log("Auth middleware - cookies received:", {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!req.cookies.refreshToken,
+      cookieNames: Object.keys(req.cookies),
+      origin: req.headers.origin,
+      userAgent: req.headers["user-agent"]?.substring(0, 50),
+    });
+
     if (!accessToken) {
       return res.status(401).json({
         success: false,
@@ -24,6 +33,8 @@ const authenticateToken = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    console.log("Auth middleware error:", error.message);
+
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({
         success: false,
@@ -87,7 +98,6 @@ const authenticateRefreshToken = async (req, res, next) => {
     });
   }
 };
-
 
 module.exports = {
   authenticateToken,

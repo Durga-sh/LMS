@@ -28,6 +28,7 @@ const LoginPage = () => {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        console.log("LoginPage: Checking if user is already authenticated...");
         const result = await authAPI.getCurrentUser();
         console.log("LoginPage checkAuthStatus result:", result);
         if (result.success) {
@@ -60,19 +61,25 @@ const LoginPage = () => {
     setMessage("");
 
     try {
-  
+      console.log("LoginPage: Attempting login...");
       const result = await authAPI.login(formData);
+      console.log("LoginPage: Login result:", result);
+
       if (result.success) {
         setMessage(result.message);
         const redirectPath = location.state?.from?.pathname || "/leads";
+        console.log("Login successful, will redirect to:", redirectPath);
+
+        // Wait a bit longer for cookies to be properly set in production
         setTimeout(() => {
           try {
+            console.log("LoginPage: Navigating to:", redirectPath);
             navigate(redirectPath, { replace: true });
           } catch (navError) {
             console.error("Navigation error, using window.location:", navError);
             window.location.href = redirectPath;
           }
-        }, 100); 
+        }, 200); // Increased delay for production cookie propagation
       } else {
         console.error("Login failed:", result);
         if (result.errors) {
