@@ -1,12 +1,10 @@
 // Backend/src/routes/leads.js
 const express = require("express");
 const leadController = require("../controller/leadController");
-const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
 
 // All lead routes require authentication
-router.use(authenticateToken);
 
 // Lead CRUD routes
 router.post("/", leadController.createLead);
