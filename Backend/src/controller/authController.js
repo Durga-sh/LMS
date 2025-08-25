@@ -20,12 +20,27 @@ class AuthController {
 
   setTokenCookies(res, accessToken, refreshToken) {
     const isProduction = process.env.NODE_ENV === "production";
+
+    // Clear existing cookies first in production
+    if (isProduction) {
+      res.clearCookie("accessToken");
+      res.clearCookie("refreshToken");
+    }
+
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? "none" : "lax", // "none" for cross-origin in production
-      domain: isProduction ? undefined : undefined, // Let browser handle domain
+      path: "/",
     };
+
+    // Add production-specific debugging
+    console.log("Setting cookies with options:", {
+      isProduction,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      httpOnly: cookieOptions.httpOnly,
+    });
 
     res.cookie("accessToken", accessToken, {
       ...cookieOptions,
@@ -36,11 +51,24 @@ class AuthController {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
+
+    // Add explicit headers for production debugging
+    if (isProduction) {
+      res.header("Access-Control-Allow-Credentials", "true");
+    }
   }
 
   clearTokenCookies(res) {
-    res.clearCookie("accessToken");
-    res.clearCookie("refreshToken");
+    const isProduction = process.env.NODE_ENV === "production";
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax",
+      path: "/",
+    };
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", cookieOptions);
   }
 
   // Add the missing validation methods
@@ -164,6 +192,14 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
+      // Production debugging
+      console.log("Login attempt:", {
+        email,
+        origin: req.headers.origin,
+        userAgent: req.headers["user-agent"]?.substring(0, 50),
+        NODE_ENV: process.env.NODE_ENV,
+      });
+
       const validationErrors = this.validateLogin({ email, password });
       if (validationErrors.length > 0) {
         return res.status(400).json({
@@ -195,7 +231,9 @@ class AuthController {
       user.refreshToken = refreshToken;
       await user.save();
 
+      console.log("Login successful for user:", user.email);
       this.setTokenCookies(res, accessToken, refreshToken);
+
       res.status(200).json({
         success: true,
         message: "Login successful",

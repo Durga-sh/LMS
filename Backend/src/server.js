@@ -15,7 +15,7 @@ app.use(cookieParser());
 // Enhanced CORS configuration for production
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
@@ -24,6 +24,13 @@ const corsOptions = {
       "http://localhost:5173",
       "https://lms-virid-one.vercel.app",
     ].filter(Boolean);
+
+    console.log(
+      "CORS check - Origin:",
+      origin,
+      "Allowed:",
+      allowedOrigins.includes(origin)
+    );
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -34,11 +41,22 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
+  exposedHeaders: ["Set-Cookie"],
   optionsSuccessStatus: 200,
+  preflightContinue: false,
 };
 
 app.use(cors(corsOptions));
+
+// Additional middleware for production cookie handling
+app.use((req, res, next) => {
+  if (process.env.NODE_ENV === "production") {
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Cross-Origin-Resource-Policy", "cross-origin");
+  }
+  next();
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
