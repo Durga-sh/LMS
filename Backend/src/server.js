@@ -96,6 +96,10 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/leads", leadRoutes);
 
+app.get("/", (req, res) => {
+  res.status(200).json({ success: true, message: "Backend is running" });
+});
+
 app.use((err, req, res, next) => {
   console.error("Error occurred:", {
     error: err.message,
