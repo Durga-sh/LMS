@@ -70,16 +70,57 @@ const LoginPage = () => {
         const redirectPath = location.state?.from?.pathname || "/leads";
         console.log("Login successful, will redirect to:", redirectPath);
 
-        // Wait a bit longer for cookies to be properly set in production
-        setTimeout(() => {
+        // Enhanced production handling with multiple verification attempts
+        const verifyAndRedirect = async (attempt = 1, maxAttempts = 5) => {
           try {
-            console.log("LoginPage: Navigating to:", redirectPath);
-            navigate(redirectPath, { replace: true });
-          } catch (navError) {
-            console.error("Navigation error, using window.location:", navError);
-            window.location.href = redirectPath;
+            console.log(`Verification attempt ${attempt}/${maxAttempts}`);
+
+            // Wait progressively longer for cookies to propagate in production
+            const delay =
+              import.meta.env.MODE === "production" ? attempt * 200 : 100;
+            await new Promise((resolve) => setTimeout(resolve, delay));
+
+            // Verify authentication before redirecting
+            const authCheck = await authAPI.getCurrentUser();
+            console.log(
+              `Auth verification attempt ${attempt}:`,
+              authCheck.success
+            );
+
+            if (authCheck.success) {
+              console.log(
+                "Authentication verified, navigating to:",
+                redirectPath
+              );
+              navigate(redirectPath, { replace: true });
+            } else if (attempt < maxAttempts) {
+              console.log(
+                `Auth not verified, retrying... (${attempt}/${maxAttempts})`
+              );
+              return verifyAndRedirect(attempt + 1, maxAttempts);
+            } else {
+              console.error(
+                "Max verification attempts reached, forcing redirect"
+              );
+              // Force redirect as fallback
+              window.location.href = redirectPath;
+            }
+          } catch (verifyError) {
+            console.error(
+              `Verification attempt ${attempt} failed:`,
+              verifyError
+            );
+            if (attempt < maxAttempts) {
+              return verifyAndRedirect(attempt + 1, maxAttempts);
+            } else {
+              console.log("All verification attempts failed, forcing redirect");
+              window.location.href = redirectPath;
+            }
           }
-        }, 200); // Increased delay for production cookie propagation
+        };
+
+        // Start verification and redirect process
+        verifyAndRedirect();
       } else {
         console.error("Login failed:", result);
         if (result.errors) {
@@ -119,6 +160,15 @@ const LoginPage = () => {
             </h1>
             <p className="text-gray-600">Sign in to your account</p>
           </div>
+
+          {/* Debug info for production troubleshooting */}
+          {import.meta.env.MODE === "production" && (
+            <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+              <div>Mode: {import.meta.env.MODE}</div>
+              <div>API: {import.meta.env.VITE_API_BASE_URL}</div>
+              <div>Origin: {window.location.origin}</div>
+            </div>
+          )}
 
           {/* Messages */}
           {message && (
