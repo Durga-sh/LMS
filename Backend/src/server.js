@@ -39,7 +39,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.use("https://lms-virid-one.vercel.app/", (req, res) => {
+app.use("https://lms-virid-one.vercel.app", (req, res) => {
   res.status(404).json({
     success: false,
     message: "Route not found",
