@@ -1,4 +1,3 @@
-// frontend/src/pages/LeadManagementPage.jsx - Fixed Lead Management with AG Grid
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry } from "ag-grid-community";
@@ -6,7 +5,6 @@ import { ClientSideRowModelModule, CsvExportModule } from "ag-grid-community";
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-quartz.css";
 
-// Register AG Grid modules
 ModuleRegistry.registerModules([ClientSideRowModelModule, CsvExportModule]);
 import {
   Plus,
@@ -27,28 +25,36 @@ import { useNavigate } from "react-router-dom";
 import leadAPI from "../api/leads";
 import authAPI from "../api/auth";
 
-// Advanced Filter Form Component
-const AdvancedFilterForm = ({ onApply, onClear, currentFilters }) => {
+const AdvancedFilterForm = ({ onApply, onClear }) => {
   const [filters, setFilters] = useState({
-    status: currentFilters.status || "",
-    source: currentFilters.source || "",
-    is_qualified:
-      currentFilters.is_qualified !== undefined
-        ? currentFilters.is_qualified.toString()
-        : "",
-    score_min: currentFilters.score?.gte || "",
-    score_max: currentFilters.score?.lte || "",
-    lead_value_min: currentFilters.lead_value?.gte || "",
-    lead_value_max: currentFilters.lead_value?.lte || "",
-    created_after: currentFilters.createdAt?.after
-      ? new Date(currentFilters.createdAt.after).toISOString().split("T")[0]
-      : "",
-    created_before: currentFilters.createdAt?.before
-      ? new Date(currentFilters.createdAt.before).toISOString().split("T")[0]
-      : "",
-    city: currentFilters.city?.contains || "",
-    company: currentFilters.company?.contains || "",
-    email: currentFilters.email?.contains || "",
+    email_operator: "contains",
+    email_value: "",
+    company_operator: "contains",
+    company_value: "",
+    city_operator: "contains",
+    city_value: "",
+
+    status_operator: "equals",
+    status_value: "",
+    source_operator: "equals",
+    source_value: "",
+
+    score_operator: "between",
+    score_equals: "",
+    score_min: "",
+    score_max: "",
+
+    lead_value_operator: "between",
+    lead_value_equals: "",
+    lead_value_min: "",
+    lead_value_max: "",
+
+    created_at_operator: "between",
+    created_at_on: "",
+    created_at_after: "",
+    created_at_before: "",
+
+    is_qualified: "",
   });
 
   const handleFilterChange = (e) => {
@@ -61,66 +67,146 @@ const AdvancedFilterForm = ({ onApply, onClear, currentFilters }) => {
 
   const handleApply = () => {
     const apiFilters = {};
+    if (filters.email_value.trim()) {
+      if (filters.email_operator === "equals") {
+        apiFilters.email = { equals: filters.email_value.trim() };
+      } else if (filters.email_operator === "contains") {
+        apiFilters.email = { contains: filters.email_value.trim() };
+      }
+    }
 
-    // String filters (exact match)
-    if (filters.status) apiFilters.status = filters.status;
-    if (filters.source) apiFilters.source = filters.source;
+    if (filters.company_value.trim()) {
+      if (filters.company_operator === "equals") {
+        apiFilters.company = { equals: filters.company_value.trim() };
+      } else if (filters.company_operator === "contains") {
+        apiFilters.company = { contains: filters.company_value.trim() };
+      }
+    }
 
-    // String filters (contains)
-    if (filters.city) apiFilters.city = { contains: filters.city };
-    if (filters.company) apiFilters.company = { contains: filters.company };
-    if (filters.email) apiFilters.email = { contains: filters.email };
+    if (filters.city_value.trim()) {
+      if (filters.city_operator === "equals") {
+        apiFilters.city = { equals: filters.city_value.trim() };
+      } else if (filters.city_operator === "contains") {
+        apiFilters.city = { contains: filters.city_value.trim() };
+      }
+    }
 
-    // Boolean filters
+    if (filters.status_value) {
+      apiFilters.status = { equals: filters.status_value };
+    }
+
+    if (filters.source_value) {
+      apiFilters.source = { equals: filters.source_value };
+    }
+    if (filters.score_operator === "equals" && filters.score_equals !== "") {
+      apiFilters.score = { equals: Number(filters.score_equals) };
+    } else if (filters.score_operator === "gt" && filters.score_equals !== "") {
+      apiFilters.score = { gt: Number(filters.score_equals) };
+    } else if (filters.score_operator === "lt" && filters.score_equals !== "") {
+      apiFilters.score = { lt: Number(filters.score_equals) };
+    } else if (filters.score_operator === "between") {
+      const scoreFilter = {};
+      if (filters.score_min !== "") scoreFilter.gte = Number(filters.score_min);
+      if (filters.score_max !== "") scoreFilter.lte = Number(filters.score_max);
+      if (Object.keys(scoreFilter).length > 0) {
+        apiFilters.score = scoreFilter;
+      }
+    }
+
+    if (
+      filters.lead_value_operator === "equals" &&
+      filters.lead_value_equals !== ""
+    ) {
+      apiFilters.lead_value = { equals: Number(filters.lead_value_equals) };
+    } else if (
+      filters.lead_value_operator === "gt" &&
+      filters.lead_value_equals !== ""
+    ) {
+      apiFilters.lead_value = { gt: Number(filters.lead_value_equals) };
+    } else if (
+      filters.lead_value_operator === "lt" &&
+      filters.lead_value_equals !== ""
+    ) {
+      apiFilters.lead_value = { lt: Number(filters.lead_value_equals) };
+    } else if (filters.lead_value_operator === "between") {
+      const valueFilter = {};
+      if (filters.lead_value_min !== "")
+        valueFilter.gte = Number(filters.lead_value_min);
+      if (filters.lead_value_max !== "")
+        valueFilter.lte = Number(filters.lead_value_max);
+      if (Object.keys(valueFilter).length > 0) {
+        apiFilters.lead_value = valueFilter;
+      }
+    }
+
+    if (filters.created_at_operator === "on" && filters.created_at_on) {
+      apiFilters.createdAt = {
+        on: new Date(filters.created_at_on).toISOString(),
+      };
+    } else if (
+      filters.created_at_operator === "before" &&
+      filters.created_at_before
+    ) {
+      const beforeDate = new Date(filters.created_at_before);
+      beforeDate.setHours(23, 59, 59, 999);
+      apiFilters.createdAt = {
+        before: beforeDate.toISOString(),
+      };
+    } else if (
+      filters.created_at_operator === "after" &&
+      filters.created_at_after
+    ) {
+      apiFilters.createdAt = {
+        after: new Date(filters.created_at_after).toISOString(),
+      };
+    } else if (filters.created_at_operator === "between") {
+      const dateFilter = {};
+      if (filters.created_at_after) {
+        dateFilter.after = new Date(filters.created_at_after).toISOString();
+      }
+      if (filters.created_at_before) {
+        const beforeDate = new Date(filters.created_at_before);
+        beforeDate.setHours(23, 59, 59, 999);
+        dateFilter.before = beforeDate.toISOString();
+      }
+      if (Object.keys(dateFilter).length > 0) {
+        apiFilters.createdAt = dateFilter;
+      }
+    }
+
     if (filters.is_qualified !== "") {
       apiFilters.is_qualified = { equals: filters.is_qualified === "true" };
     }
 
-    // Number range filters
-    if (filters.score_min || filters.score_max) {
-      apiFilters.score = {};
-      if (filters.score_min) apiFilters.score.gte = Number(filters.score_min);
-      if (filters.score_max) apiFilters.score.lte = Number(filters.score_max);
-    }
-
-    if (filters.lead_value_min || filters.lead_value_max) {
-      apiFilters.lead_value = {};
-      if (filters.lead_value_min)
-        apiFilters.lead_value.gte = Number(filters.lead_value_min);
-      if (filters.lead_value_max)
-        apiFilters.lead_value.lte = Number(filters.lead_value_max);
-    }
-
-    // Date filters
-    if (filters.created_after || filters.created_before) {
-      apiFilters.createdAt = {};
-      if (filters.created_after)
-        apiFilters.createdAt.after = new Date(
-          filters.created_after
-        ).toISOString();
-      if (filters.created_before)
-        apiFilters.createdAt.before = new Date(
-          filters.created_before
-        ).toISOString();
-    }
-
+    console.log("Applying filters:", apiFilters);
     onApply(apiFilters);
   };
 
   const handleClear = () => {
     setFilters({
-      status: "",
-      source: "",
-      is_qualified: "",
+      email_operator: "contains",
+      email_value: "",
+      company_operator: "contains",
+      company_value: "",
+      city_operator: "contains",
+      city_value: "",
+      status_operator: "equals",
+      status_value: "",
+      source_operator: "equals",
+      source_value: "",
+      score_operator: "between",
+      score_equals: "",
       score_min: "",
       score_max: "",
+      lead_value_operator: "between",
+      lead_value_equals: "",
       lead_value_min: "",
       lead_value_max: "",
-      created_after: "",
-      created_before: "",
-      city: "",
-      company: "",
-      email: "",
+      created_at_operator: "between",
+      created_at_on: "",
+      created_at_after: "",
+      created_at_before: "",
+      is_qualified: "",
     });
     onClear();
   };
@@ -128,13 +214,88 @@ const AdvancedFilterForm = ({ onApply, onClear, currentFilters }) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="col-span-full border rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Email Filter
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            <select
+              name="email_operator"
+              value={filters.email_operator}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="contains">Contains</option>
+              <option value="equals">Equals</option>
+            </select>
+            <input
+              type="text"
+              name="email_value"
+              value={filters.email_value}
+              onChange={handleFilterChange}
+              placeholder="Email value..."
+              className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="col-span-full border rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Company Filter
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            <select
+              name="company_operator"
+              value={filters.company_operator}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="contains">Contains</option>
+              <option value="equals">Equals</option>
+            </select>
+            <input
+              type="text"
+              name="company_value"
+              value={filters.company_value}
+              onChange={handleFilterChange}
+              placeholder="Company value..."
+              className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <div className="col-span-full border rounded-lg p-4 bg-gray-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            City Filter
+          </h4>
+          <div className="grid grid-cols-3 gap-2">
+            <select
+              name="city_operator"
+              value={filters.city_operator}
+              onChange={handleFilterChange}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="contains">Contains</option>
+              <option value="equals">Equals</option>
+            </select>
+            <input
+              type="text"
+              name="city_value"
+              value={filters.city_value}
+              onChange={handleFilterChange}
+              placeholder="City value..."
+              className="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Status
           </label>
           <select
-            name="status"
-            value={filters.status}
+            name="status_value"
+            value={filters.status_value}
             onChange={handleFilterChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
@@ -152,8 +313,8 @@ const AdvancedFilterForm = ({ onApply, onClear, currentFilters }) => {
             Source
           </label>
           <select
-            name="source"
-            value={filters.source}
+            name="source_value"
+            value={filters.source_value}
             onChange={handleFilterChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
@@ -183,134 +344,200 @@ const AdvancedFilterForm = ({ onApply, onClear, currentFilters }) => {
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Email Contains
-          </label>
-          <input
-            type="text"
-            name="email"
-            value={filters.email}
-            onChange={handleFilterChange}
-            placeholder="Search by email..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Company Contains
-          </label>
-          <input
-            type="text"
-            name="company"
-            value={filters.company}
-            onChange={handleFilterChange}
-            placeholder="Search by company..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            City Contains
-          </label>
-          <input
-            type="text"
-            name="city"
-            value={filters.city}
-            onChange={handleFilterChange}
-            placeholder="Search by city..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Min Score
-            </label>
-            <input
-              type="number"
-              name="score_min"
-              value={filters.score_min}
+        <div className="col-span-full border rounded-lg p-4 bg-blue-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Score Filter
+          </h4>
+          <div className="grid grid-cols-4 gap-2">
+            <select
+              name="score_operator"
+              value={filters.score_operator}
               onChange={handleFilterChange}
-              min="0"
-              max="100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Max Score
-            </label>
-            <input
-              type="number"
-              name="score_max"
-              value={filters.score_max}
-              onChange={handleFilterChange}
-              min="0"
-              max="100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="equals">Equals</option>
+              <option value="gt">Greater Than</option>
+              <option value="lt">Less Than</option>
+              <option value="between">Between</option>
+            </select>
+            {filters.score_operator === "equals" ||
+            filters.score_operator === "gt" ||
+            filters.score_operator === "lt" ? (
+              <input
+                type="number"
+                name="score_equals"
+                value={filters.score_equals}
+                onChange={handleFilterChange}
+                min="0"
+                max="100"
+                placeholder={
+                  filters.score_operator === "equals"
+                    ? "Score"
+                    : filters.score_operator === "gt"
+                    ? "Greater than..."
+                    : "Less than..."
+                }
+                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <>
+                <input
+                  type="number"
+                  name="score_min"
+                  value={filters.score_min}
+                  onChange={handleFilterChange}
+                  min="0"
+                  max="100"
+                  placeholder="Min Score"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="flex items-center justify-center text-gray-500">
+                  to
+                </span>
+                <input
+                  type="number"
+                  name="score_max"
+                  value={filters.score_max}
+                  onChange={handleFilterChange}
+                  min="0"
+                  max="100"
+                  placeholder="Max Score"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </>
+            )}
           </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Min Value ($)
-            </label>
-            <input
-              type="number"
-              name="lead_value_min"
-              value={filters.lead_value_min}
+        <div className="col-span-full border rounded-lg p-4 bg-green-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Lead Value Filter ($)
+          </h4>
+          <div className="grid grid-cols-4 gap-2">
+            <select
+              name="lead_value_operator"
+              value={filters.lead_value_operator}
               onChange={handleFilterChange}
-              min="0"
-              step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Max Value ($)
-            </label>
-            <input
-              type="number"
-              name="lead_value_max"
-              value={filters.lead_value_max}
-              onChange={handleFilterChange}
-              min="0"
-              step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="equals">Equals</option>
+              <option value="gt">Greater Than</option>
+              <option value="lt">Less Than</option>
+              <option value="between">Between</option>
+            </select>
+            {filters.lead_value_operator === "equals" ||
+            filters.lead_value_operator === "gt" ||
+            filters.lead_value_operator === "lt" ? (
+              <input
+                type="number"
+                name="lead_value_equals"
+                value={filters.lead_value_equals}
+                onChange={handleFilterChange}
+                min="0"
+                step="0.01"
+                placeholder={
+                  filters.lead_value_operator === "equals"
+                    ? "Value"
+                    : filters.lead_value_operator === "gt"
+                    ? "Greater than..."
+                    : "Less than..."
+                }
+                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <>
+                <input
+                  type="number"
+                  name="lead_value_min"
+                  value={filters.lead_value_min}
+                  onChange={handleFilterChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="Min Value"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+                <span className="flex items-center justify-center text-gray-500">
+                  to
+                </span>
+                <input
+                  type="number"
+                  name="lead_value_max"
+                  value={filters.lead_value_max}
+                  onChange={handleFilterChange}
+                  min="0"
+                  step="0.01"
+                  placeholder="Max Value"
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                />
+              </>
+            )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Created After
-            </label>
-            <input
-              type="date"
-              name="created_after"
-              value={filters.created_after}
+        <div className="col-span-full border rounded-lg p-4 bg-yellow-50">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Created Date Filter
+          </h4>
+          <div className="grid grid-cols-4 gap-2">
+            <select
+              name="created_at_operator"
+              value={filters.created_at_operator}
               onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Created Before
-            </label>
-            <input
-              type="date"
-              name="created_before"
-              value={filters.created_before}
-              onChange={handleFilterChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="on">On Date</option>
+              <option value="before">Before Date</option>
+              <option value="after">After Date</option>
+              <option value="between">Between</option>
+            </select>
+            {filters.created_at_operator === "on" ? (
+              <input
+                type="date"
+                name="created_at_on"
+                value={filters.created_at_on}
+                onChange={handleFilterChange}
+                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              />
+            ) : filters.created_at_operator === "before" ? (
+              <input
+                type="date"
+                name="created_at_before"
+                value={filters.created_at_before}
+                onChange={handleFilterChange}
+                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Before Date"
+              />
+            ) : filters.created_at_operator === "after" ? (
+              <input
+                type="date"
+                name="created_at_after"
+                value={filters.created_at_after}
+                onChange={handleFilterChange}
+                className="col-span-3 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="After Date"
+              />
+            ) : (
+              <>
+                <input
+                  type="date"
+                  name="created_at_after"
+                  value={filters.created_at_after}
+                  onChange={handleFilterChange}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="After"
+                />
+                <span className="flex items-center justify-center text-gray-500">
+                  to
+                </span>
+                <input
+                  type="date"
+                  name="created_at_before"
+                  value={filters.created_at_before}
+                  onChange={handleFilterChange}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="Before"
+                />
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -350,19 +577,16 @@ const LeadManagementPage = () => {
   const [leadStats, setLeadStats] = useState(null);
   const [error, setError] = useState("");
 
-  // Filter state
-  const [quickFilter, setQuickFilter] = useState("");
+  const [quickFilter] = useState("");
   const [advancedFilters, setAdvancedFilters] = useState({});
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
 
-  // Pagination state
   const [paginationData, setPaginationData] = useState({
     currentPage: 1,
     pageSize: 20,
     totalPages: 1,
   });
 
-  // Form state for create/edit
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -381,7 +605,6 @@ const LeadManagementPage = () => {
   const [formErrors, setFormErrors] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // Grid column definitions
   const columnDefs = [
     {
       headerName: "Name",
@@ -638,7 +861,6 @@ const LeadManagementPage = () => {
     },
   ];
 
-  // Default grid options
   const defaultColDef = {
     flex: 1,
     minWidth: 100,
@@ -646,7 +868,6 @@ const LeadManagementPage = () => {
     sortable: true,
   };
 
-  // Function definitions
   const fetchCurrentUser = useCallback(async () => {
     try {
       const result = await authAPI.getCurrentUser();
@@ -679,39 +900,38 @@ const LeadManagementPage = () => {
         limit: paginationData.pageSize,
         sort: "createdAt",
         order: "desc",
-        ...advancedFilters,
       };
+
+      if (Object.keys(advancedFilters).length > 0) {
+        params.filters = JSON.stringify(advancedFilters);
+      }
 
       const result = await leadAPI.getLeads(params);
       console.log("API Response:", result);
 
       if (result.success) {
-        // Handle both array and object response formats
         let leadsData = [];
         let paginationInfo = null;
 
         if (Array.isArray(result.data)) {
-          // If result.data is directly an array
           leadsData = result.data;
           paginationInfo = result.pagination;
         } else if (result.data && Array.isArray(result.data.data)) {
-          // If result.data has a nested data array
           leadsData = result.data.data;
           paginationInfo = result.data.pagination || result.pagination;
         } else if (result.data && result.data.leads) {
-          // Alternative structure
           leadsData = result.data.leads;
           paginationInfo = result.data.pagination || result.pagination;
         } else {
           console.warn("Unexpected data structure:", result);
-          leadsData = [];
+          leadsData = result.data || [];
         }
 
         console.log("Processed leads data:", leadsData);
         console.log("Pagination info:", paginationInfo);
 
-        // Ensure each lead has all required fields with defaults
         const processedLeads = leadsData.map((lead) => ({
+          id: lead._id || lead.id || Math.random().toString(),
           _id: lead._id || lead.id || "",
           first_name: lead.first_name || "",
           last_name: lead.last_name || "",
@@ -738,7 +958,10 @@ const LeadManagementPage = () => {
           ...prev,
           totalPages:
             paginationInfo?.totalPages ||
-            Math.ceil(processedLeads.length / prev.pageSize),
+            Math.ceil(
+              (paginationInfo?.totalCount || processedLeads.length) /
+                prev.pageSize
+            ),
         }));
 
         console.log("Final processed data:", processedLeads);
@@ -772,17 +995,14 @@ const LeadManagementPage = () => {
     }
   };
 
-  // Load current user on mount
   useEffect(() => {
     fetchCurrentUser();
   }, [fetchCurrentUser]);
 
-  // Load leads when component mounts or filters change
   useEffect(() => {
     loadLeads();
   }, [loadLeads]);
 
-  // Handle quick filter separately with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (gridRef.current?.api) {
@@ -793,7 +1013,6 @@ const LeadManagementPage = () => {
     return () => clearTimeout(timeoutId);
   }, [quickFilter]);
 
-  // Handle cell clicks for actions
   function handleCellClicked(params) {
     if (params.column.colId === "actions") {
       const target = params.event.target;
@@ -884,7 +1103,6 @@ const LeadManagementPage = () => {
     setFormErrors([]);
 
     try {
-      // Convert numeric values
       const submitData = {
         ...formData,
         score: Number(formData.score) || 0,
@@ -953,27 +1171,32 @@ const LeadManagementPage = () => {
   };
 
   const handlePageSizeChange = (pageSize) => {
+    const newPageSize = Math.max(20, Number(pageSize)); // Ensure minimum of 20
     setPaginationData((prev) => ({
       ...prev,
-      pageSize: Number(pageSize),
+      pageSize: newPageSize,
       currentPage: 1,
     }));
   };
 
   const applyAdvancedFilters = (filters) => {
+    console.log("Applying advanced filters:", filters);
     setAdvancedFilters(filters);
     setPaginationData((prev) => ({
       ...prev,
       currentPage: 1,
     }));
+    setShowAdvancedFilter(false);
   };
 
   const clearAdvancedFilters = () => {
+    console.log("Clearing advanced filters");
     setAdvancedFilters({});
     setPaginationData((prev) => ({
       ...prev,
       currentPage: 1,
     }));
+    setShowAdvancedFilter(false);
   };
 
   const exportToCSV = () => {
@@ -997,7 +1220,6 @@ const LeadManagementPage = () => {
             "createdAt",
           ],
           processCellCallback: (params) => {
-            // Format specific fields for CSV
             if (params.column.colId === "is_qualified") {
               return params.value ? "Yes" : "No";
             }
@@ -1024,7 +1246,6 @@ const LeadManagementPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -1059,9 +1280,7 @@ const LeadManagementPage = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Action Bar */}
         <div className="mb-6 flex flex-col lg:flex-row gap-4 justify-between items-start lg:items-center">
           <div className="flex flex-wrap gap-3">
             <button
@@ -1090,10 +1309,19 @@ const LeadManagementPage = () => {
             </button>
             <button
               onClick={() => setShowAdvancedFilter(true)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors shadow-sm ${
+                Object.keys(advancedFilters).length > 0
+                  ? "bg-orange-600 text-white hover:bg-orange-700"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700"
+              }`}
             >
               <Filter className="w-4 h-4" />
               Advanced Filters
+              {Object.keys(advancedFilters).length > 0 && (
+                <span className="ml-1 bg-white text-orange-600 text-xs px-2 py-0.5 rounded-full font-medium">
+                  {Object.keys(advancedFilters).length}
+                </span>
+              )}
             </button>
             <button
               onClick={exportToCSV}
@@ -1102,14 +1330,6 @@ const LeadManagementPage = () => {
               <Download className="w-4 h-4" />
               Export CSV
             </button>
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Quick search..."
-              value={quickFilter}
-              onChange={(e) => setQuickFilter(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64 shadow-sm"
-            />
           </div>
         </div>
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1168,17 +1388,52 @@ const LeadManagementPage = () => {
                 <span className="text-sm font-medium text-blue-800">
                   Active Filters:
                 </span>
-                {Object.entries(advancedFilters).map(([key, value]) => (
-                  <span
-                    key={key}
-                    className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                  >
-                    {key}:{" "}
-                    {typeof value === "object"
-                      ? JSON.stringify(value)
-                      : value.toString()}
-                  </span>
-                ))}
+                {Object.entries(advancedFilters).map(([key, value]) => {
+                  let displayText = "";
+                  if (typeof value === "object") {
+                    if (value.contains) {
+                      displayText = `${key} contains "${value.contains}"`;
+                    } else if (value.equals !== undefined) {
+                      displayText = `${key} = ${value.equals}`;
+                    } else if (
+                      value.gte !== undefined ||
+                      value.lte !== undefined
+                    ) {
+                      const min = value.gte !== undefined ? value.gte : "min";
+                      const max = value.lte !== undefined ? value.lte : "max";
+                      displayText = `${key}: ${min} - ${max}`;
+                    } else if (value.after || value.before) {
+                      if (value.after && value.before) {
+                        displayText = `${key}: ${new Date(
+                          value.after
+                        ).toLocaleDateString()} - ${new Date(
+                          value.before
+                        ).toLocaleDateString()}`;
+                      } else if (value.after) {
+                        displayText = `${key} after ${new Date(
+                          value.after
+                        ).toLocaleDateString()}`;
+                      } else {
+                        displayText = `${key} before ${new Date(
+                          value.before
+                        ).toLocaleDateString()}`;
+                      }
+                    } else {
+                      displayText = `${key}: ${JSON.stringify(value)}`;
+                    }
+                  } else {
+                    displayText = `${key}: ${value}`;
+                  }
+
+                  return (
+                    <span
+                      key={key}
+                      className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                    >
+                      {displayText}
+                    </span>
+                  );
+                })}
               </div>
               <button
                 onClick={clearAdvancedFilters}
@@ -1258,7 +1513,6 @@ const LeadManagementPage = () => {
                 onChange={(e) => handlePageSizeChange(e.target.value)}
                 className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value={10}>10 per page</option>
                 <option value={20}>20 per page</option>
                 <option value={50}>50 per page</option>
                 <option value={100}>100 per page</option>

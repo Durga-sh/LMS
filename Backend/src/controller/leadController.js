@@ -1,11 +1,11 @@
-
 const Lead = require("../model/Lead");
 const mongoose = require("mongoose");
 
 class LeadController {
-
   buildFilterQuery(filters, userId) {
     const query = { created_by: userId };
+
+    console.log("Building filter query with filters:", filters);
 
     if (!filters) return query;
 
@@ -19,6 +19,8 @@ class LeadController {
       ) {
         return;
       }
+
+      console.log(`Processing filter for ${field}:`, filterValue);
 
       switch (field) {
         case "email":
@@ -76,6 +78,7 @@ class LeadController {
             }
             if (Object.keys(numberQuery).length > 0) {
               query[field] = numberQuery;
+              console.log(`Added number query for ${field}:`, numberQuery);
             }
           }
           break;
@@ -93,10 +96,10 @@ class LeadController {
               dateQuery.$lt = nextDay;
             }
             if (filterValue.before) {
-              dateQuery.$lt = new Date(filterValue.before);
+              dateQuery.$lte = new Date(filterValue.before);
             }
             if (filterValue.after) {
-              dateQuery.$gt = new Date(filterValue.after);
+              dateQuery.$gte = new Date(filterValue.after);
             }
             if (
               filterValue.between &&
@@ -108,6 +111,7 @@ class LeadController {
             }
             if (Object.keys(dateQuery).length > 0) {
               query[field] = dateQuery;
+              console.log(`Added date query for ${field}:`, dateQuery);
             }
           }
           break;
@@ -121,11 +125,125 @@ class LeadController {
             filterValue.equals !== undefined
           ) {
             query[field] = filterValue.equals;
+            console.log(
+              `Added boolean query for ${field}:`,
+              filterValue.equals
+            );
           }
           break;
       }
     });
 
+    console.log("Final query:", JSON.stringify(query, null, 2));
+    return query;
+  }
+
+  buildAdvancedFilterQuery(filters, userId) {
+    const query = { created_by: userId };
+
+    console.log("Building advanced filter query with filters:", filters);
+
+    if (!filters || Object.keys(filters).length === 0) {
+      return query;
+    }
+
+    Object.keys(filters).forEach((field) => {
+      const filterConfig = filters[field];
+
+      if (!filterConfig || typeof filterConfig !== "object") {
+        return;
+      }
+
+      console.log(`Processing advanced filter for ${field}:`, filterConfig);
+
+      switch (field) {
+        // String fields (email, company, city)
+        case "email":
+        case "company":
+        case "city":
+          if (filterConfig.equals) {
+            query[field] = filterConfig.equals;
+          } else if (filterConfig.contains) {
+            query[field] = { $regex: filterConfig.contains, $options: "i" };
+          }
+          break;
+
+        // Enum fields (status, source)
+        case "status":
+        case "source":
+          if (filterConfig.equals) {
+            query[field] = filterConfig.equals;
+          } else if (
+            filterConfig.in &&
+            Array.isArray(filterConfig.in) &&
+            filterConfig.in.length > 0
+          ) {
+            query[field] = { $in: filterConfig.in };
+          }
+          break;
+
+        // Number fields (score, lead_value)
+        case "score":
+        case "lead_value":
+          if (filterConfig.equals !== undefined) {
+            query[field] = filterConfig.equals;
+          } else {
+            const rangeQuery = {};
+            if (filterConfig.gte !== undefined)
+              rangeQuery.$gte = filterConfig.gte;
+            if (filterConfig.lte !== undefined)
+              rangeQuery.$lte = filterConfig.lte;
+            if (filterConfig.gt !== undefined) rangeQuery.$gt = filterConfig.gt;
+            if (filterConfig.lt !== undefined) rangeQuery.$lt = filterConfig.lt;
+            if (Object.keys(rangeQuery).length > 0) {
+              query[field] = rangeQuery;
+              console.log(`Added number query for ${field}:`, rangeQuery);
+            }
+          }
+          break;
+
+        // Date fields (createdAt, last_activity_at)
+        case "createdAt":
+        case "last_activity_at":
+          if (filterConfig.on) {
+            const onDate = new Date(filterConfig.on);
+            const nextDay = new Date(onDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            query[field] = {
+              $gte: onDate,
+              $lt: nextDay,
+            };
+            console.log(`Added date "on" query for ${field}:`, query[field]);
+          } else {
+            const dateQuery = {};
+            if (filterConfig.after)
+              dateQuery.$gte = new Date(filterConfig.after);
+            if (filterConfig.before)
+              dateQuery.$lte = new Date(filterConfig.before);
+            if (Object.keys(dateQuery).length > 0) {
+              query[field] = dateQuery;
+              console.log(`Added date range query for ${field}:`, dateQuery);
+            }
+          }
+          break;
+
+        // Boolean fields (is_qualified)
+        case "is_qualified":
+          if (filterConfig.equals !== undefined) {
+            query[field] = filterConfig.equals;
+            console.log(
+              `Added boolean query for ${field}:`,
+              filterConfig.equals
+            );
+          }
+          break;
+
+        default:
+          console.warn(`Unknown filter field: ${field}`);
+      }
+    });
+
+    console.log("Final advanced query:", JSON.stringify(query, null, 2));
     return query;
   }
 
@@ -286,14 +404,30 @@ class LeadController {
         limit = 20,
         sort = "createdAt",
         order = "desc",
-        ...filters
+        filters = "{}",
       } = req.query;
 
+      console.log("Raw query params:", req.query);
+
       const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const limitNum = Math.min(100, Math.max(20, parseInt(limit))); // Ensure minimum of 20
       const skip = (pageNum - 1) * limitNum;
 
-      const query = this.buildFilterQuery(filters, req.user._id);
+      let parsedFilters = {};
+      try {
+        if (typeof filters === "string" && filters !== "{}") {
+          parsedFilters = JSON.parse(filters);
+        } else if (typeof filters === "object") {
+          parsedFilters = filters;
+        }
+      } catch (error) {
+        console.error("Error parsing filters:", error);
+        parsedFilters = {};
+      }
+
+      console.log("Parsed filters:", parsedFilters);
+      const query = this.buildAdvancedFilterQuery(parsedFilters, req.user._id);
+      console.log("MongoDB query:", JSON.stringify(query, null, 2));
 
       const sortObj = {};
       sortObj[sort] = order === "asc" ? 1 : -1;
@@ -316,6 +450,7 @@ class LeadController {
           hasNextPage: pageNum < totalPages,
           hasPrevPage: pageNum > 1,
         },
+        appliedFilters: parsedFilters,
       });
     } catch (error) {
       console.error("Get leads error:", error);

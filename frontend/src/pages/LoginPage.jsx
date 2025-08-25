@@ -131,7 +131,6 @@ const LoginPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
-
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <User className="w-10 h-10 text-white" />
@@ -141,14 +140,6 @@ const LoginPage = () => {
             </h1>
             <p className="text-gray-600">Sign in to your account</p>
           </div>
-
-          {import.meta.env.MODE === "production" && (
-            <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
-              <div>Mode: {import.meta.env.MODE}</div>
-              <div>API: {import.meta.env.VITE_API_BASE_URL}</div>
-              <div>Origin: {window.location.origin}</div>
-            </div>
-          )}
 
           {message && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
