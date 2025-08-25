@@ -25,21 +25,20 @@ const LoginPage = () => {
   const [errors, setErrors] = useState([]);
   const [message, setMessage] = useState("");
 
-  // Check if user is already authenticated
   useEffect(() => {
-    checkAuthStatus();
-  });
-
-  const checkAuthStatus = async () => {
-    try {
-      const result = await authAPI.getCurrentUser();
-      if (result.success) {
-        navigate("/leads", { replace: true });
+    const checkAuthStatus = async () => {
+      try {
+        const result = await authAPI.getCurrentUser();
+        if (result.success) {
+          navigate("/leads", { replace: true });
+        }
+      } catch (error) {
+        console.log("User not authenticated" + error);
       }
-    } catch (error) {
-      console.log("User not authenticated" + error);
-    }
-  };
+    };
+
+    checkAuthStatus();
+  }, [navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -47,7 +46,6 @@ const LoginPage = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear errors when user starts typing
     if (errors.length > 0) setErrors([]);
   };
 
@@ -59,16 +57,23 @@ const LoginPage = () => {
     setMessage("");
 
     try {
+      console.log("Attempting login with:", { email: formData.email });
       const result = await authAPI.login(formData);
+      console.log("Login result:", result);
 
       if (result.success) {
         setMessage(result.message);
-        // Short delay to show success message, then redirect
-        setTimeout(() => {
-          const from = location.state?.from?.pathname || "/leads";
+        const from = location.state?.from?.pathname || "/leads";
+        console.log("Attempting to navigate to:", from);
+
+        try {
           navigate(from, { replace: true });
-        }, 1000);
+        } catch (navError) {
+          console.error("Navigation error, using window.location:", navError);
+          window.location.href = from;
+        }
       } else {
+        console.error("Login failed:", result);
         if (result.errors) {
           setErrors(result.errors);
         } else {
@@ -76,8 +81,10 @@ const LoginPage = () => {
         }
       }
     } catch (error) {
-      setErrors(["Network error. Please try again."]);
       console.error("Login error:", error);
+      setErrors([
+        `Network error: ${error.message}. Please check your connection and try again.`,
+      ]);
     } finally {
       setLoading(false);
     }

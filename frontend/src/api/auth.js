@@ -1,6 +1,4 @@
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL 
 class AuthAPI {
   async register(userData) {
     try {
@@ -47,7 +45,7 @@ class AuthAPI {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", 
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -65,7 +63,7 @@ class AuthAPI {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", 
+        credentials: "include",
       });
 
       const data = await response.json();
@@ -83,7 +81,7 @@ class AuthAPI {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", 
+        credentials: "include",
       });
 
       const data = await response.json();

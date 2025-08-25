@@ -24,9 +24,10 @@ const ProtectedRoute = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       const result = await authAPI.getCurrentUser();
+      console.log("ProtectedRoute auth check result:", result);
       setIsAuthenticated(result.success);
     } catch (error) {
-      console.log("User not authenticated:", error);
+      console.error("User not authenticated in ProtectedRoute:", error);
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
@@ -52,9 +53,11 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!isAuthenticated) {
+    console.log("ProtectedRoute: User not authenticated, redirecting to login");
     return <Navigate to="/login" replace />;
   }
 
+  console.log("ProtectedRoute: User authenticated, rendering children");
   return children;
 };
 
