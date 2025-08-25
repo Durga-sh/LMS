@@ -100,10 +100,7 @@ const App = () => {
             }
           />
 
-          {/* Default redirect to leads for authenticated users, login for others */}
           <Route path="/" element={<Navigate to="/leads" replace />} />
-
-          {/* 404 Route - catch all unmatched routes */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </div>

@@ -1,4 +1,3 @@
-// LoginPage.jsx - Updated with Navigation
 import React, { useState, useEffect } from "react";
 import {
   Eye,
@@ -35,17 +34,12 @@ const LoginPage = () => {
     try {
       const result = await authAPI.getCurrentUser();
       if (result.success) {
-        // User is already logged in, redirect to dashboard
         navigate("/leads", { replace: true });
       }
     } catch (error) {
-      // User not authenticated, stay on login page
-      console.log("User not authenticated"+ error);
+      console.log("User not authenticated" + error);
     }
   };
-
-  // Get the intended destination from location state, default to dashboard
-  const from = location.state?.from?.pathname || "/dashboard";
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -71,6 +65,7 @@ const LoginPage = () => {
         setMessage(result.message);
         // Short delay to show success message, then redirect
         setTimeout(() => {
+          const from = location.state?.from?.pathname || "/leads";
           navigate(from, { replace: true });
         }, 1000);
       } else {

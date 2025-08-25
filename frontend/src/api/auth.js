@@ -1,4 +1,4 @@
-// api.js - API service for authentication
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 class AuthAPI {
