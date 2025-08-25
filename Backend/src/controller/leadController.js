@@ -1,9 +1,9 @@
-// Backend/src/controller/leadController.js
+
 const Lead = require("../model/Lead");
 const mongoose = require("mongoose");
 
 class LeadController {
-  // Helper method to build filter query
+
   buildFilterQuery(filters, userId) {
     const query = { created_by: userId };
 
@@ -21,7 +21,6 @@ class LeadController {
       }
 
       switch (field) {
-        // String fields - email, company, city, first_name, last_name
         case "email":
         case "company":
         case "city":
@@ -30,7 +29,6 @@ class LeadController {
         case "phone":
         case "state":
           if (typeof filterValue === "string") {
-            // Default to contains for string
             query[field] = { $regex: filterValue, $options: "i" };
           } else if (typeof filterValue === "object") {
             if (filterValue.equals) {
@@ -41,7 +39,6 @@ class LeadController {
           }
           break;
 
-        // Enum fields - status, source
         case "status":
         case "source":
           if (typeof filterValue === "string") {
@@ -55,7 +52,6 @@ class LeadController {
           }
           break;
 
-        // Number fields - score, lead_value
         case "score":
         case "lead_value":
           if (typeof filterValue === "number") {
@@ -84,7 +80,6 @@ class LeadController {
           }
           break;
 
-        // Date fields - createdAt, updatedAt, last_activity_at
         case "createdAt":
         case "updatedAt":
         case "last_activity_at":
@@ -134,7 +129,6 @@ class LeadController {
     return query;
   }
 
-  // Validation helper
   validateLeadData(data, isUpdate = false) {
     const errors = [];
 
@@ -232,8 +226,6 @@ class LeadController {
 
     return errors;
   }
-
-  // Create a new lead
   createLead = async (req, res) => {
     try {
       const validationErrors = this.validateLeadData(req.body);
@@ -245,8 +237,6 @@ class LeadController {
           errors: validationErrors,
         });
       }
-
-      // Check if email already exists
       const existingLead = await Lead.findOne({
         email: req.body.email,
         created_by: req.user._id,
@@ -289,7 +279,6 @@ class LeadController {
     }
   };
 
-  // Get leads with pagination and filtering
   getLeads = async (req, res) => {
     try {
       const {
@@ -300,19 +289,15 @@ class LeadController {
         ...filters
       } = req.query;
 
-      // Validate and sanitize pagination parameters
       const pageNum = Math.max(1, parseInt(page));
       const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
       const skip = (pageNum - 1) * limitNum;
 
-      // Build filter query
       const query = this.buildFilterQuery(filters, req.user._id);
 
-      // Build sort object
       const sortObj = {};
       sortObj[sort] = order === "asc" ? 1 : -1;
 
-      // Execute queries
       const [leads, totalCount] = await Promise.all([
         Lead.find(query).sort(sortObj).skip(skip).limit(limitNum).lean(),
         Lead.countDocuments(query),
@@ -341,7 +326,6 @@ class LeadController {
     }
   };
 
-  // Get single lead by ID
   getLeadById = async (req, res) => {
     try {
       const { id } = req.params;
@@ -378,7 +362,6 @@ class LeadController {
     }
   };
 
-  // Update lead
   updateLead = async (req, res) => {
     try {
       const { id } = req.params;
@@ -400,7 +383,6 @@ class LeadController {
         });
       }
 
-      // Check if email is being updated and already exists
       if (req.body.email) {
         const existingLead = await Lead.findOne({
           email: req.body.email,
@@ -457,7 +439,6 @@ class LeadController {
     }
   };
 
-  // Delete lead
   deleteLead = async (req, res) => {
     try {
       const { id } = req.params;
@@ -494,7 +475,6 @@ class LeadController {
     }
   };
 
-  // Get lead statistics (bonus feature)
   getLeadStats = async (req, res) => {
     try {
       const userId = req.user._id;
@@ -527,7 +507,6 @@ class LeadController {
         },
       ]);
 
-      // Get status breakdown
       const statusStats = await Lead.aggregate([
         { $match: { created_by: userId } },
         {
@@ -538,7 +517,6 @@ class LeadController {
         },
       ]);
 
-      // Get source breakdown
       const sourceStats = await Lead.aggregate([
         { $match: { created_by: userId } },
         {

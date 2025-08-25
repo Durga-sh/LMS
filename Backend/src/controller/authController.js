@@ -27,28 +27,26 @@ class AuthController {
       sameSite: isProduction ? "none" : "lax",
       path: "/",
     };
-
-    // Add production-specific debugging
     console.log("Setting cookies with options:", {
       isProduction,
       secure: cookieOptions.secure,
       sameSite: cookieOptions.sameSite,
       httpOnly: cookieOptions.httpOnly,
-      domain: isProduction ? undefined : undefined, // Let browser handle domain
+      domain: isProduction ? undefined : undefined, 
     });
 
-    // Set cookies with explicit configuration for production
+  
     res.cookie("accessToken", accessToken, {
       ...cookieOptions,
-      maxAge: 15 * 60 * 1000, // 15 minutes
+      maxAge: 15 * 60 * 1000, 
     });
 
     res.cookie("refreshToken", refreshToken, {
       ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, 
     });
 
-    // Production-specific headers for cookie handling
+ 
     if (isProduction) {
       res.header("Access-Control-Allow-Credentials", "true");
       res.header("Vary", "Origin");
@@ -68,18 +66,15 @@ class AuthController {
     res.clearCookie("refreshToken", cookieOptions);
   }
 
-  // Add the missing validation methods
   validateRegistration({ name, email, password }) {
     const errors = [];
 
-    // Name validation
     if (!name || name.trim().length === 0) {
       errors.push("Name is required");
     } else if (name.trim().length < 2) {
       errors.push("Name must be at least 2 characters long");
     }
 
-    // Email validation
     if (!email || email.trim().length === 0) {
       errors.push("Email is required");
     } else {
@@ -88,8 +83,6 @@ class AuthController {
         errors.push("Please provide a valid email address");
       }
     }
-
-    // Password validation
     if (!password) {
       errors.push("Password is required");
     } else {
@@ -113,7 +106,7 @@ class AuthController {
   validateLogin({ email, password }) {
     const errors = [];
 
-    // Email validation
+
     if (!email || email.trim().length === 0) {
       errors.push("Email is required");
     } else {
@@ -122,8 +115,6 @@ class AuthController {
         errors.push("Please provide a valid email address");
       }
     }
-
-    // Password validation
     if (!password || password.trim().length === 0) {
       errors.push("Password is required");
     }
@@ -189,21 +180,6 @@ class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Enhanced production debugging
-      console.log("Login attempt:", {
-        email,
-        origin: req.headers.origin,
-        userAgent: req.headers["user-agent"]?.substring(0, 50),
-        NODE_ENV: process.env.NODE_ENV,
-        cookies: req.cookies,
-        headers: {
-          "access-control-request-credentials":
-            req.headers["access-control-request-credentials"],
-          "access-control-request-headers":
-            req.headers["access-control-request-headers"],
-        },
-      });
-
       const validationErrors = this.validateLogin({ email, password });
       if (validationErrors.length > 0) {
         return res.status(400).json({
@@ -235,10 +211,7 @@ class AuthController {
       user.refreshToken = refreshToken;
       await user.save();
 
-      console.log("Login successful for user:", user.email);
       this.setTokenCookies(res, accessToken, refreshToken);
-
-      // Add a small delay in production to ensure cookies are set
       if (process.env.NODE_ENV === "production") {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }

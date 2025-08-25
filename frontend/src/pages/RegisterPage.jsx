@@ -1,4 +1,4 @@
-// RegisterPage.jsx - Updated with Navigation
+
 import React, { useState, useEffect } from "react";
 import {
   Eye,
@@ -26,7 +26,6 @@ const RegisterPage = () => {
   const [errors, setErrors] = useState([]);
   const [message, setMessage] = useState("");
 
-  // Check if user is already authenticated
   useEffect(() => {
     checkAuthStatus();
   });
@@ -35,11 +34,9 @@ const RegisterPage = () => {
     try {
       const result = await authAPI.getCurrentUser();
       if (result.success) {
-        // User is already logged in, redirect to dashboard
-        navigate("/dashboard", { replace: true });
+        navigate("/leads", { replace: true });
       }
     } catch (error) {
-      // User not authenticated, stay on register page
       console.log("User not authenticated"+error);
     }
   };
@@ -50,7 +47,6 @@ const RegisterPage = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear errors when user starts typing
     if (errors.length > 0) setErrors([]);
   };
 
@@ -66,9 +62,8 @@ const RegisterPage = () => {
 
       if (result.success) {
         setMessage(result.message);
-        // Short delay to show success message, then redirect to dashboard
         setTimeout(() => {
-          navigate("/dashboard", { replace: true });
+          navigate("/leads", { replace: true });
         }, 1000);
       } else {
         if (result.errors) {
@@ -92,8 +87,6 @@ const RegisterPage = () => {
       handleSubmit();
     }
   };
-
-  // Password strength indicator
   const getPasswordStrength = (password) => {
     let strength = 0;
     if (password.length >= 6) strength++;
@@ -118,9 +111,7 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-teal-900 to-cyan-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Main Card */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <User className="w-10 h-10 text-white" />
@@ -130,8 +121,6 @@ const RegisterPage = () => {
             </h1>
             <p className="text-gray-600">Join us today and get started</p>
           </div>
-
-          {/* Messages */}
           {message && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -153,9 +142,8 @@ const RegisterPage = () => {
             </div>
           )}
 
-          {/* Registration Form */}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
@@ -175,8 +163,6 @@ const RegisterPage = () => {
                 />
               </div>
             </div>
-
-            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -197,7 +183,6 @@ const RegisterPage = () => {
               </div>
             </div>
 
-            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -228,8 +213,6 @@ const RegisterPage = () => {
                   )}
                 </button>
               </div>
-
-              {/* Password Strength Indicator */}
               {formData.password && (
                 <div className="mt-3 animate-fade-in">
                   <div className="flex gap-1 mb-2">
@@ -266,7 +249,6 @@ const RegisterPage = () => {
               )}
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || !isFormValid}
@@ -282,8 +264,6 @@ const RegisterPage = () => {
               )}
             </button>
           </form>
-
-          {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-gray-600">
               Already have an account?{" "}
@@ -297,7 +277,6 @@ const RegisterPage = () => {
           </div>
         </div>
 
-        {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-white/70 text-sm">
             By creating an account, you agree to our terms and privacy policy

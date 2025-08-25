@@ -5,23 +5,9 @@ const authenticateToken = async (req, res, next) => {
   try {
     const accessToken = req.cookies.accessToken;
 
-    // Enhanced debug logging for production issues
-    console.log("Auth middleware - detailed cookie analysis:", {
-      hasAccessToken: !!accessToken,
-      hasRefreshToken: !!req.cookies.refreshToken,
-      allCookies: req.cookies,
-      cookieNames: Object.keys(req.cookies),
-      cookieHeader: req.headers.cookie,
-      origin: req.headers.origin,
-      referer: req.headers.referer,
-      userAgent: req.headers["user-agent"]?.substring(0, 50),
-      method: req.method,
-      path: req.path,
-      timestamp: new Date().toISOString(),
-    });
+
 
     if (!accessToken) {
-      console.log("❌ No access token found in cookies");
       return res.status(401).json({
         success: false,
         message: "Access denied. No access token provided.",
@@ -35,22 +21,20 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    console.log("🔍 Verifying access token...");
+
     const user = await authController.verifyAccessToken(accessToken);
 
     if (!user) {
-      console.log("❌ Access token verification failed - user not found");
       return res.status(401).json({
         success: false,
         message: "Invalid access token. User not found.",
       });
     }
 
-    console.log("✅ Access token verified for user:", user.email);
     req.user = user;
     next();
   } catch (error) {
-    console.log("❌ Auth middleware error:", {
+    console.log(" Auth middleware error:", {
       error: error.message,
       name: error.name,
       stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
@@ -64,7 +48,6 @@ const authenticateToken = async (req, res, next) => {
       });
     }
     if (error.name === "TokenExpiredError") {
-      console.log("🔄 Access token expired, client should refresh");
       return res.status(401).json({
         success: false,
         message: "Access token expired. Please refresh your token.",
@@ -90,29 +73,25 @@ const authenticateRefreshToken = async (req, res, next) => {
     });
 
     if (!refreshToken) {
-      console.log("❌ No refresh token found in cookies");
       return res.status(401).json({
         success: false,
         message: "Access denied. No refresh token provided.",
       });
     }
 
-    console.log("🔍 Verifying refresh token...");
     const user = await authController.verifyRefreshToken(refreshToken);
 
     if (!user) {
-      console.log("❌ Refresh token verification failed - user not found");
       return res.status(401).json({
         success: false,
         message: "Invalid refresh token. User not found.",
       });
     }
 
-    console.log("✅ Refresh token verified for user:", user.email);
     req.user = user;
     next();
   } catch (error) {
-    console.log("❌ Refresh token middleware error:", error.message);
+
 
     if (error.name === "JsonWebTokenError") {
       return res.status(401).json({

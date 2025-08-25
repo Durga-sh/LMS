@@ -3,7 +3,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 
 class LeadAPI {
-  // Helper method to handle API responses
   async handleResponse(response) {
     const data = await response.json();
     if (!response.ok) {
@@ -12,7 +11,6 @@ class LeadAPI {
     return data;
   }
 
-  // Create a new lead
   async createLead(leadData) {
     try {
       const response = await fetch(`${API_BASE_URL}/leads`, {
@@ -31,12 +29,10 @@ class LeadAPI {
     }
   }
 
-  // Get leads with pagination and filtering
   async getLeads(params = {}) {
     try {
       const queryParams = new URLSearchParams();
 
-      // Add all parameters to query string
       Object.keys(params).forEach((key) => {
         if (
           params[key] !== undefined &&
@@ -66,7 +62,7 @@ class LeadAPI {
     }
   }
 
-  // Get single lead by ID
+
   async getLeadById(id) {
     try {
       const response = await fetch(`${API_BASE_URL}/leads/${id}`, {
@@ -84,7 +80,6 @@ class LeadAPI {
     }
   }
 
-  // Update lead
   async updateLead(id, leadData) {
     try {
       const response = await fetch(`${API_BASE_URL}/leads/${id}`, {
@@ -103,7 +98,6 @@ class LeadAPI {
     }
   }
 
-  // Delete lead
   async deleteLead(id) {
     try {
       const response = await fetch(`${API_BASE_URL}/leads/${id}`, {
@@ -120,8 +114,6 @@ class LeadAPI {
       throw error;
     }
   }
-
-  // Get lead statistics
   async getLeadStats() {
     try {
       const response = await fetch(`${API_BASE_URL}/leads/stats`, {
@@ -139,7 +131,6 @@ class LeadAPI {
     }
   }
 
-  // Helper methods for filtering
   buildStringFilter(value, operator = "contains") {
     if (!value) return undefined;
 

@@ -12,7 +12,6 @@ import authAPI from "./api/auth";
 import { Loader2 } from "lucide-react";
 import { debugEnvironment } from "./utils/debug";
 
-// Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,17 +21,10 @@ const ProtectedRoute = ({ children }) => {
 
     const checkAuthStatus = async () => {
       try {
-        console.log("ProtectedRoute: Checking authentication status...");
         const result = await authAPI.getCurrentUser();
-        console.log("ProtectedRoute auth check result:", result);
 
         if (isMounted) {
           setIsAuthenticated(result.success);
-          if (!result.success) {
-            console.log(
-              "ProtectedRoute: Authentication failed, will redirect to login"
-            );
-          }
         }
       } catch (error) {
         console.error("ProtectedRoute authentication error:", error);
@@ -84,7 +76,6 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
-// 404 Not Found Page Component
 const NotFoundPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-red-900 to-pink-900 flex items-center justify-center p-4">
@@ -109,7 +100,6 @@ const NotFoundPage = () => {
 };
 
 const App = () => {
-  // Debug environment in production to help diagnose issues
   if (import.meta.env.MODE === "production") {
     debugEnvironment();
   }

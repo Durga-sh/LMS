@@ -34,10 +34,9 @@ class AuthAPI {
 
       const data = await response.json();
 
-      // Log successful login for debugging
+
       if (data.success) {
         console.log("Login successful, checking cookies...");
-        // Check if cookies are being set by making a test request
         setTimeout(async () => {
           try {
             const testResponse = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -95,13 +94,11 @@ class AuthAPI {
 
       const data = await response.json();
 
-      // If access token expired, try to refresh
       if (!response.ok && data.code === "TOKEN_EXPIRED") {
-        console.log("Access token expired, attempting refresh...");
         const refreshResult = await this.refreshTokens();
 
         if (refreshResult.success) {
-          // Retry the original request after refresh
+     
           const retryResponse = await fetch(`${API_BASE_URL}/auth/me`, {
             method: "GET",
             headers: {

@@ -1916,7 +1916,6 @@ const LeadManagementPage = () => {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Overview Stats */}
                 <div className="lg:col-span-1">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Overview
@@ -1965,7 +1964,6 @@ const LeadManagementPage = () => {
                   </div>
                 </div>
 
-                {/* Status Breakdown */}
                 <div className="lg:col-span-1">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Status Breakdown
@@ -2014,8 +2012,6 @@ const LeadManagementPage = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Source Breakdown */}
                 <div className="lg:col-span-1">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
                     Source Breakdown
@@ -2064,7 +2060,6 @@ const LeadManagementPage = () => {
         </div>
       )}
 
-      {/* Advanced Filter Panel */}
       {showAdvancedFilter && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">

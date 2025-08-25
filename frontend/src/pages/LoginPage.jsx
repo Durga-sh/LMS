@@ -61,32 +61,20 @@ const LoginPage = () => {
     setMessage("");
 
     try {
-      console.log("LoginPage: Attempting login...");
       const result = await authAPI.login(formData);
-      console.log("LoginPage: Login result:", result);
 
       if (result.success) {
         setMessage(result.message);
         const redirectPath = location.state?.from?.pathname || "/leads";
-        console.log("Login successful, will redirect to:", redirectPath);
-
-        // Enhanced production handling with multiple verification attempts
         const verifyAndRedirect = async (attempt = 1, maxAttempts = 5) => {
           try {
             console.log(`Verification attempt ${attempt}/${maxAttempts}`);
 
-            // Wait progressively longer for cookies to propagate in production
             const delay =
               import.meta.env.MODE === "production" ? attempt * 200 : 100;
             await new Promise((resolve) => setTimeout(resolve, delay));
 
-            // Verify authentication before redirecting
             const authCheck = await authAPI.getCurrentUser();
-            console.log(
-              `Auth verification attempt ${attempt}:`,
-              authCheck.success
-            );
-
             if (authCheck.success) {
               console.log(
                 "Authentication verified, navigating to:",
@@ -94,15 +82,11 @@ const LoginPage = () => {
               );
               navigate(redirectPath, { replace: true });
             } else if (attempt < maxAttempts) {
-              console.log(
-                `Auth not verified, retrying... (${attempt}/${maxAttempts})`
-              );
               return verifyAndRedirect(attempt + 1, maxAttempts);
             } else {
               console.error(
                 "Max verification attempts reached, forcing redirect"
               );
-              // Force redirect as fallback
               window.location.href = redirectPath;
             }
           } catch (verifyError) {
@@ -113,13 +97,11 @@ const LoginPage = () => {
             if (attempt < maxAttempts) {
               return verifyAndRedirect(attempt + 1, maxAttempts);
             } else {
-              console.log("All verification attempts failed, forcing redirect");
               window.location.href = redirectPath;
             }
           }
         };
 
-        // Start verification and redirect process
         verifyAndRedirect();
       } else {
         console.error("Login failed:", result);
@@ -148,9 +130,8 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Main Card */}
         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-8 border border-white/20">
-          {/* Header */}
+
           <div className="text-center mb-8">
             <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <User className="w-10 h-10 text-white" />
@@ -161,7 +142,6 @@ const LoginPage = () => {
             <p className="text-gray-600">Sign in to your account</p>
           </div>
 
-          {/* Debug info for production troubleshooting */}
           {import.meta.env.MODE === "production" && (
             <div className="mb-4 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
               <div>Mode: {import.meta.env.MODE}</div>
@@ -170,7 +150,6 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* Messages */}
           {message && (
             <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 animate-fade-in">
               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -192,9 +171,7 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -214,8 +191,6 @@ const LoginPage = () => {
                 />
               </div>
             </div>
-
-            {/* Password Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Password
@@ -247,8 +222,6 @@ const LoginPage = () => {
                 </button>
               </div>
             </div>
-
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading || !formData.email || !formData.password}
@@ -265,7 +238,6 @@ const LoginPage = () => {
             </button>
           </form>
 
-          {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-gray-600">
               Don't have an account?{" "}
@@ -279,7 +251,6 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {/* Additional Info */}
         <div className="mt-6 text-center">
           <p className="text-white/70 text-sm">
             Secure login with HTTP-only cookies
